@@ -9,23 +9,35 @@
 const chai = require('chai');
 const assert = chai.assert;
 
+const { JSDOM } = require('jsdom');
 let Translator;
 
 suite('Functional Tests', () => {
   suiteSetup(() => {
-    // DOM already mocked -- load translator then run tests
-    Translator = require('../public/translator.js');
+    // Mock the DOM for testing and load Translator
+    return JSDOM.fromFile('./views/index.html')
+      .then((dom) => {
+        global.window = dom.window;
+        global.document = dom.window.document;
+
+        Translator = require('../public/translator.js').Translator;
+      });
   });
 
-  suite('Function ____()', () => {
+  suite('Function translateButtonClickHandler()', () => {
     /* 
       The translated sentence is appended to the `translated-sentence` `div`
       and the translated words or terms are wrapped in 
       `<span class="highlight">...</span>` tags when the "Translate" button is pressed.
     */
     test("Translation appended to the `translated-sentence` `div`", done => {
-
-      // done();
+      const input = 'Mangoes are my favorite fruit.';
+      const output = 'Mangoes are my <span class="highlight">favourite</span> fruit.';
+      document.getElementById('text-input').value = input;
+      Translator.translateButtonClickHanlder();
+      assert.equal(document.getElementById('translated-sentence').innerHTML,
+        output);
+      done();
     });
 
     /* 
@@ -35,7 +47,11 @@ suite('Functional Tests', () => {
     */
     test("'Everything looks good to me!' message appended to the `translated-sentence` `div`", done => {
 
-      // done();
+      document.getElementById('text-input').value = "No translation needed!";
+      Translator.translateButtonClickHanlder();
+      assert.equal(document.getElementById('translated-sentence').innerHTML,
+        'Everything looks good to me!');
+      done();
     });
 
     /* 
@@ -44,20 +60,27 @@ suite('Functional Tests', () => {
       the `error-msg` `div`.
     */
     test("'Error: No text to translate.' message appended to the `translated-sentence` `div`", done => {
-
-      // done();
+      document.getElementById('text-input').value = "";
+      Translator.translateButtonClickHanlder();
+      assert.equal(document.getElementById('error-msg').innerHTML,
+        'Error: No text to translate.');
+      done();
     });
 
   });
 
-  suite('Function ____()', () => {
+  suite('Function clearButtonClickHandler()', () => {
     /* 
       The text area and both the `translated-sentence` and `error-msg`
       `divs` are cleared when the "Clear" button is pressed.
     */
     test("Text area, `translated-sentence`, and `error-msg` are cleared", done => {
-
-      // done();
+      document.getElementById('translated-sentence').innerHTML = "Clear Me!";
+      document.getElementById('error-msg').innerHTML = "Clear me!";
+      Translator.clearButtonClickHandler();
+      assert.isEmpty(document.getElementById('translated-sentence').innerHTML);
+      assert.isEmpty(document.getElementById('error-msg').innerHTML);
+      done();
     });
 
   });
